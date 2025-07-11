@@ -20,7 +20,7 @@ const loadProductImages = async () => {
     
     // Try to load images sequentially from 1.jpg, 2.jpg, etc.
     for (let i = 1; i <= appState.maxProductsToTry; i++) {
-        const imagePath = `assets/products/${i}.jpg`;
+        const imagePath = `assets/products/${i}.png`;
         const imageExists = await checkImageExists(imagePath);
         
         if (imageExists) {
