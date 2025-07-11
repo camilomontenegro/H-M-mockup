@@ -1,10 +1,45 @@
 // Utility Functions
 
-// DOM manipulation helpers
-const createElement = (tag, className = '', textContent = '') => {
+// Enhanced DOM manipulation helpers
+const createElement = (tag, options = {}) => {
     const element = document.createElement(tag);
-    if (className) element.className = className;
-    if (textContent) element.textContent = textContent;
+    
+    // Set className if provided
+    if (options.className) {
+        element.className = options.className;
+    }
+    
+    // Set textContent if provided
+    if (options.textContent) {
+        element.textContent = options.textContent;
+    }
+    
+    // Set innerHTML if provided (use with caution)
+    if (options.innerHTML) {
+        element.innerHTML = options.innerHTML;
+    }
+    
+    // Set attributes if provided
+    if (options.attributes) {
+        Object.entries(options.attributes).forEach(([key, value]) => {
+            element.setAttribute(key, value);
+        });
+    }
+    
+    // Set properties if provided
+    if (options.properties) {
+        Object.entries(options.properties).forEach(([key, value]) => {
+            element[key] = value;
+        });
+    }
+    
+    // Add event listeners if provided
+    if (options.events) {
+        Object.entries(options.events).forEach(([event, handler]) => {
+            element.addEventListener(event, handler);
+        });
+    }
+    
     return element;
 };
 
@@ -82,11 +117,14 @@ const generateProductPrice = () => {
 
 // Image loading helpers
 const createImageElement = (src, alt, className = '') => {
-    const img = createElement('img', className);
-    img.src = src;
-    img.alt = alt;
-    img.loading = 'lazy';
-    return img;
+    return createElement('img', {
+        className,
+        attributes: {
+            src,
+            alt,
+            loading: 'lazy'
+        }
+    });
 };
 
 const checkImageExists = async (imagePath) => {
@@ -101,6 +139,61 @@ const checkImageExists = async (imagePath) => {
 // Array helpers
 const range = (start, end) => {
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+};
+
+// Additional utility functions for Supabase integration
+const formatCurrency = (price, currency = '€') => {
+    if (typeof price === 'number') {
+        return `${currency}${price.toFixed(2)}`;
+    }
+    return `${currency}${price}`;
+};
+
+const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
+};
+
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+// DOM state management helpers
+const toggleClass = (element, className, condition) => {
+    if (condition) {
+        element.classList.add(className);
+    } else {
+        element.classList.remove(className);
+    }
+};
+
+const setActiveButton = (buttons, activeButton) => {
+    buttons.forEach(btn => btn.classList.remove('active'));
+    activeButton.classList.add('active');
+};
+
+// Error handling helpers
+const handleError = (error, context = '') => {
+    console.error(`Error in ${context}:`, error);
+    return {
+        success: false,
+        error: error.message || 'An unexpected error occurred'
+    };
+};
+
+const handleSuccess = (data, message = '') => {
+    return {
+        success: true,
+        data,
+        message
+    };
 };
 
 // Export functions to global scope for compatibility

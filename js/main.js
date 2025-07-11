@@ -1,111 +1,242 @@
-// Main application logic
+// Main application logic with Supabase integration
 
-// State management
+// Supabase configuration - Load from environment or config
+const SUPABASE_URL = window.ENV?.SUPABASE_URL || 'https://your-project.supabase.co';
+const SUPABASE_KEY = window.ENV?.SUPABASE_KEY || 'your-anon-key';
+
+// Initialize Supabase client
+let supabase;
+
+// Application state
 let appState = {
     isLoading: false,
+    currentGender: 'women',
     products: [],
-    maxProductsToTry: 50 // Maximum number of sequential images to try
+    hasError: false,
+    errorMessage: ''
 };
 
-// Product management
-const loadProductImages = async () => {
-    const productGrid = querySelector('#product-grid');
-    if (!productGrid) return;
+// DOM elements cache
+const domElements = {
+    productsGrid: null,
+    statusMessage: null,
+    womenButton: null,
+    menButton: null,
+    authButton: null
+};
 
-    // Show loading state
-    appState.isLoading = true;
-    productGrid.innerHTML = '<div class="loading">Loading products...</div>';
+// Initialize DOM elements cache
+const cacheDOMElements = () => {
+    domElements.productsGrid = querySelector('#products-grid');
+    domElements.statusMessage = querySelector('#status-message');
+    domElements.womenButton = querySelector('#btn-women');
+    domElements.menButton = querySelector('#btn-men');
+    domElements.authButton = querySelector('#auth-button');
+};
 
-    const loadedProducts = [];
-    
-    // Try to load images sequentially from 1.jpg, 2.jpg, etc.
-    for (let i = 1; i <= appState.maxProductsToTry; i++) {
-        const imagePath = `assets/products/${i}.png`;
-        const imageExists = await checkImageExists(imagePath);
-        
-        if (imageExists) {
-            const product = createProductData(i, imagePath);
-            loadedProducts.push(product);
-        } else {
-            // Stop trying if we hit 3 consecutive missing images
-            if (i > 3 && loadedProducts.length === 0) break;
-            if (i > loadedProducts.length + 3) break;
+// Initialize Supabase client
+const initializeSupabase = () => {
+    try {
+        if (typeof window.supabase === 'undefined') {
+            throw new Error('Supabase library not loaded');
         }
+        
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        console.log('Supabase client initialized successfully');
+        return true;
+    } catch (error) {
+        console.error('Failed to initialize Supabase:', error);
+        showMessage('Failed to connect to database. Please check your configuration.', 'error');
+        return false;
+    }
+};
+
+// Fetch products from Supabase
+const fetchProducts = async (gender = 'women') => {
+    if (!supabase) {
+        return handleError(new Error('Supabase not initialized'), 'fetchProducts');
     }
 
-    appState.products = loadedProducts;
-    appState.isLoading = false;
-    renderProducts(loadedProducts);
+    try {
+        appState.isLoading = true;
+        showMessage('Loading products...', 'loading');
+
+        const { data, error } = await supabase
+            .from('products')
+            .select('*')
+            .eq('gender', gender)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw error;
+        }
+
+        appState.products = data || [];
+        appState.hasError = false;
+        appState.errorMessage = '';
+        
+        return handleSuccess(data, `Found ${data.length} products`);
+    } catch (error) {
+        appState.hasError = true;
+        appState.errorMessage = error.message;
+        return handleError(error, 'fetchProducts');
+    } finally {
+        appState.isLoading = false;
+    }
 };
 
-const createProductData = (index, imagePath) => {
-    return {
-        id: index,
-        name: generateProductName(index - 1),
-        price: generateProductPrice(),
-        image: imagePath,
-        alt: `Product ${index}`
-    };
-};
-
+// Create product card element
 const createProductCard = (product) => {
-    const card = createElement('div', 'product-card');
-    
-    const image = createImageElement(product.image, product.alt, 'product-image');
-    const info = createElement('div', 'product-info');
-    const name = createElement('h3', 'product-name', product.name);
-    const price = createElement('p', 'product-price', product.price);
-    
+    const card = createElement('div', {
+        className: 'product-card',
+        attributes: {
+            'data-product-id': product.id
+        }
+    });
+
+    const image = createImageElement(
+        product.image_url || 'assets/placeholder-product.jpg',
+        product.title || 'Product image',
+        'product-image'
+    );
+
+    const info = createElement('div', {
+        className: 'product-info'
+    });
+
+    const name = createElement('h3', {
+        className: 'product-name',
+        textContent: product.title || 'Untitled Product'
+    });
+
+    const price = createElement('p', {
+        className: 'product-price',
+        textContent: formatCurrency(product.price)
+    });
+
+    // Handle image loading errors
+    image.addEventListener('error', () => {
+        image.src = 'assets/placeholder-product.jpg';
+        image.alt = 'Product image not available';
+    });
+
     info.appendChild(name);
     info.appendChild(price);
     card.appendChild(image);
     card.appendChild(info);
-    
+
     return card;
 };
 
+// Render products to the grid
 const renderProducts = (products) => {
-    const productGrid = querySelector('#product-grid');
-    if (!productGrid) return;
-
-    if (products.length === 0) {
-        productGrid.innerHTML = '<div class="loading">No products found. Add images to assets/products/ folder (1.jpg, 2.jpg, etc.)</div>';
+    if (!domElements.productsGrid) {
+        console.error('Products grid element not found');
         return;
     }
 
-    // Clear existing content
-    productGrid.innerHTML = '';
-    
+    // Clear existing products
+    domElements.productsGrid.innerHTML = '';
+
+    if (!products || products.length === 0) {
+        showMessage(`No ${appState.currentGender}'s products found.`, 'empty');
+        return;
+    }
+
+    // Clear status message on successful render
+    showMessage('', '');
+
     // Create and append product cards
+    const fragment = document.createDocumentFragment();
     products.forEach(product => {
         const productCard = createProductCard(product);
-        productGrid.appendChild(productCard);
+        fragment.appendChild(productCard);
     });
+
+    domElements.productsGrid.appendChild(fragment);
 };
 
-// Navigation management
+// Show status message
+const showMessage = (text, type = '') => {
+    if (!domElements.statusMessage) return;
+
+    domElements.statusMessage.textContent = text;
+    domElements.statusMessage.className = `status-message ${type}`;
+    
+    if (!text) {
+        domElements.statusMessage.style.display = 'none';
+    } else {
+        domElements.statusMessage.style.display = 'block';
+    }
+};
+
+// Set active gender filter
+const setActiveGender = (gender) => {
+    appState.currentGender = gender;
+    
+    if (domElements.womenButton && domElements.menButton) {
+        const buttons = [domElements.womenButton, domElements.menButton];
+        const activeButton = gender === 'women' ? domElements.womenButton : domElements.menButton;
+        setActiveButton(buttons, activeButton);
+    }
+};
+
+// Handle gender filter click
+const handleGenderFilter = async (gender) => {
+    if (appState.isLoading || appState.currentGender === gender) {
+        return;
+    }
+
+    setActiveGender(gender);
+    
+    const result = await fetchProducts(gender);
+    
+    if (result.success) {
+        renderProducts(result.data);
+    } else {
+        showMessage(`Failed to load ${gender}'s products: ${result.error}`, 'error');
+    }
+};
+
+// Initialize gender filter buttons
+const initializeGenderFilters = () => {
+    if (domElements.womenButton) {
+        domElements.womenButton.addEventListener('click', () => {
+            handleGenderFilter('women');
+        });
+    }
+
+    if (domElements.menButton) {
+        domElements.menButton.addEventListener('click', () => {
+            handleGenderFilter('men');
+        });
+    }
+
+    // Set initial active state
+    setActiveGender(appState.currentGender);
+};
+
+// Update authentication button state
 const updateAuthButton = () => {
-    const authButton = querySelector('#auth-button');
-    if (!authButton) return;
+    if (!domElements.authButton) return;
 
     const userData = getFromStorage('userData');
     const isUserLoggedIn = userData && userData.name;
 
     if (isUserLoggedIn) {
-        // Replace login button with user info and logout
-        authButton.outerHTML = `
+        domElements.authButton.outerHTML = `
             <div class="user-info">
                 <span class="user-name">${userData.name}</span>
                 <button class="logout-btn" onclick="handleLogout()">Logout</button>
             </div>
         `;
     } else {
-        // Show login button
-        authButton.textContent = 'Login';
-        authButton.onclick = () => window.location.href = 'login.html';
+        domElements.authButton.textContent = 'Login';
+        domElements.authButton.onclick = () => window.location.href = 'login.html';
     }
 };
 
+// Handle logout
 const handleLogout = () => {
     removeFromStorage('userData');
     window.location.reload();
@@ -119,7 +250,6 @@ const initializeNavigation = () => {
         link.addEventListener('click', (e) => {
             const href = link.getAttribute('href');
             
-            // Handle internal navigation
             if (href.startsWith('#')) {
                 e.preventDefault();
                 const targetId = href.substring(1);
@@ -136,21 +266,7 @@ const initializeNavigation = () => {
     });
 };
 
-// Application initialization
-const initializeApp = () => {
-    // Update authentication state
-    updateAuthButton();
-    
-    // Initialize navigation
-    initializeNavigation();
-    
-    // Load products
-    loadProductImages();
-    
-    // Add scroll effect to navbar
-    initializeScrollEffects();
-};
-
+// Initialize scroll effects
 const initializeScrollEffects = () => {
     const navbar = querySelector('.navbar');
     if (!navbar) return;
@@ -166,8 +282,52 @@ const initializeScrollEffects = () => {
     });
 };
 
-// Make logout function available globally
+// Load initial products
+const loadInitialProducts = async () => {
+    const result = await fetchProducts(appState.currentGender);
+    
+    if (result.success) {
+        renderProducts(result.data);
+    } else {
+        showMessage(`Failed to load products. Please check your Supabase configuration.`, 'error');
+    }
+};
+
+// Application initialization
+const initializeApp = async () => {
+    // Cache DOM elements
+    cacheDOMElements();
+    
+    // Initialize Supabase
+    const supabaseInitialized = initializeSupabase();
+    
+    // Update authentication state
+    updateAuthButton();
+    
+    // Initialize navigation
+    initializeNavigation();
+    
+    // Initialize scroll effects
+    initializeScrollEffects();
+    
+    // Initialize gender filters
+    initializeGenderFilters();
+    
+    // Load initial products if Supabase is available
+    if (supabaseInitialized) {
+        await loadInitialProducts();
+    }
+};
+
+// Error boundary for unhandled errors
+window.addEventListener('error', (event) => {
+    console.error('Unhandled error:', event.error);
+    showMessage('An unexpected error occurred. Please refresh the page.', 'error');
+});
+
+// Make functions available globally
 window.handleLogout = handleLogout;
+window.scrollToProducts = scrollToProducts;
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeApp);

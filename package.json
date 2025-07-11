@@ -1,0 +1,26 @@
+{
+  "name": "hm-fashion-homepage",
+  "version": "1.0.0",
+  "description": "H&M-inspired fashion homepage with Supabase backend",
+  "scripts": {
+    "build": "node generate-config.js",
+    "dev": "node generate-config.js && python -m http.server 8000",
+    "start": "python -m http.server 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/hm-fashion-homepage.git"
+  },
+  "keywords": [
+    "fashion",
+    "ecommerce",
+    "supabase",
+    "vanilla-js",
+    "responsive-design"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -181,9 +181,71 @@ body {
     text-align: center;
     font-size: 2.5rem;
     font-weight: 300;
-    margin-bottom: 50px;
+    margin-bottom: 30px;
     color: var(--color-primary);
     letter-spacing: 1px;
+}
+
+/* Gender Filter */
+.gender-filter {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.filter-btn {
+    background-color: var(--color-white);
+    color: var(--color-text);
+    border: 2px solid var(--color-neutral);
+    padding: 12px 30px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: var(--transition);
+    letter-spacing: 0.5px;
+}
+
+.filter-btn:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.filter-btn.active {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    border-color: var(--color-primary);
+}
+
+/* Status Message */
+.status-message {
+    text-align: center;
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: var(--border-radius);
+    font-weight: 500;
+    min-height: 20px;
+}
+
+.status-message.loading {
+    background-color: var(--color-secondary);
+    color: var(--color-text-light);
+}
+
+.status-message.error {
+    background-color: #fee;
+    color: #c33;
+    border: 1px solid #fcc;
+}
+
+.status-message.empty {
+    background-color: var(--color-secondary);
+    color: var(--color-text-light);
+}
+
+.status-message:empty {
+    display: none;
 }
 
 .product-grid {
@@ -351,6 +413,15 @@ body {
 
     .hero-content h1 {
         font-size: 2.5rem;
+    }
+
+    .gender-filter {
+        gap: 15px;
+    }
+
+    .filter-btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
     }
 
     .product-grid {
