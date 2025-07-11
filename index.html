@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H&M Style - Fashion Forward</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <img src="assets/logo.png" alt="H&M Style" class="logo">
+            </div>
+            <nav class="nav-menu">
+                <a href="#home" class="nav-link">Home</a>
+                <a href="#women" class="nav-link">Women</a>
+                <a href="#men" class="nav-link">Men</a>
+                <a href="#sale" class="nav-link">Sale</a>
+            </nav>
+            <div class="nav-auth">
+                <button id="auth-button" class="login-btn">Login</button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="home" class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">Style yourself. Own the moment.</h1>
+                <button class="cta-btn" onclick="scrollToProducts()">Shop now</button>
+            </div>
+        </section>
+
+        <section id="products" class="products-section">
+            <div class="container">
+                <h2 class="section-title">New Arrivals</h2>
+                <div id="product-grid" class="product-grid">
+                    <!-- Products will be dynamically loaded here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="#contact" class="footer-link">Contact</a>
+                    <a href="#careers" class="footer-link">Careers</a>
+                    <a href="#privacy" class="footer-link">Privacy Policy</a>
+                </div>
+                <div class="social-media">
+                    <a href="#" class="social-link">Instagram</a>
+                    <a href="#" class="social-link">Facebook</a>
+                    <a href="#" class="social-link">Twitter</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
