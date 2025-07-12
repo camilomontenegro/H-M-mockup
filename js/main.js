@@ -1,8 +1,7 @@
 // Main application logic with Supabase integration
 
 // Supabase configuration - Load from environment or config
-const SUPABASE_URL = window.ENV?.SUPABASE_URL || 'https://your-project.supabase.co';
-const SUPABASE_KEY = window.ENV?.SUPABASE_KEY || 'your-anon-key';
+import { supabase } from "./config";
 
 // Initialize Supabase client
 let supabase;
