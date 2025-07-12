@@ -4,7 +4,7 @@
 import { supabase } from "./config";
 
 // Initialize Supabase client
-let supabase;
+//let supabase; //redundancy
 
 // Application state
 let appState = {
