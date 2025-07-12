@@ -34,21 +34,6 @@ const cacheDOMElements = () => {
 };
 
 // Initialize Supabase client
-const initializeSupabase = () => {
-    try {
-        if (typeof window.supabase === 'undefined') {
-            throw new Error('Supabase library not loaded');
-        }
-        
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        console.log('Supabase client initialized successfully');
-        return true;
-    } catch (error) {
-        console.error('Failed to initialize Supabase:', error);
-        showMessage('Failed to connect to database. Please check your configuration.', 'error');
-        return false;
-    }
-};
 
 // Fetch products from Supabase
 const fetchProducts = async (gender = 'women') => {
@@ -313,9 +298,8 @@ const initializeApp = async () => {
     initializeGenderFilters();
     
     // Load initial products if Supabase is available
-    if (supabaseInitialized) {
-        await loadInitialProducts();
-    }
+    
+    await loadInitialProducts();
 };
 
 // Error boundary for unhandled errors
