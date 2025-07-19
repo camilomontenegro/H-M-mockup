@@ -1,5 +1,6 @@
 # Environment and configuration files
 js/config.js
+# js/config.prod.js - This one is safe to commit (anon key is public)
 .env
 .env.local
 .env.production

@@ -1,10 +1,7 @@
 // Main application logic with Supabase integration
 
-// Supabase configuration - Load from environment or config
-import { supabase } from "./config";
-
-// Initialize Supabase client
-//let supabase; //redundancy
+// Supabase configuration - Will be loaded dynamically
+let supabase;
 
 // Application state
 let appState = {
@@ -26,21 +23,32 @@ const domElements = {
 
 // Initialize DOM elements cache
 const cacheDOMElements = () => {
-    domElements.productsGrid = querySelector('#products-grid');
-    domElements.statusMessage = querySelector('#status-message');
-    domElements.womenButton = querySelector('#btn-women');
-    domElements.menButton = querySelector('#btn-men');
-    domElements.authButton = querySelector('#auth-button');
+    domElements.productsGrid = document.querySelector('#products-grid');
+    domElements.statusMessage = document.querySelector('#status-message');
+    domElements.womenButton = document.querySelector('#btn-women');
+    domElements.menButton = document.querySelector('#btn-men');
+    domElements.authButton = document.querySelector('#auth-button');
 };
 
 // Initialize Supabase client
-const initializeSupabase = () => {
-    if (supabase) {
-        console.log('Supabase initialized successfully');
+const initializeSupabase = async () => {
+    try {
+        // Try to load local config first (development)
+        const { supabase: localSupabase } = await import('./config.js');
+        supabase = localSupabase;
+        console.log('Loaded local config (development)');
         return true;
-    } else {
-        console.error('Supabase failed to initialize');
-        return false;
+    } catch (error) {
+        try {
+            // Fallback to production config
+            const { supabase: prodSupabase } = await import('./config.prod.js');
+            supabase = prodSupabase;
+            console.log('Loaded production config');
+            return true;
+        } catch (prodError) {
+            console.error('Failed to load any Supabase config:', prodError);
+            return false;
+        }
     }
 };
 
@@ -237,7 +245,7 @@ const handleLogout = () => {
 
 // Initialize smooth scroll for navigation links
 const initializeNavigation = () => {
-    const navLinks = querySelectorAll('.nav-link');
+    const navLinks = document.querySelectorAll('.nav-link');
     
     navLinks.forEach(link => {
         link.addEventListener('click', (e) => {
@@ -246,7 +254,7 @@ const initializeNavigation = () => {
             if (href.startsWith('#')) {
                 e.preventDefault();
                 const targetId = href.substring(1);
-                const targetElement = querySelector(`#${targetId}`);
+                const targetElement = document.querySelector(`#${targetId}`);
                 
                 if (targetElement) {
                     targetElement.scrollIntoView({
@@ -261,7 +269,7 @@ const initializeNavigation = () => {
 
 // Initialize scroll effects
 const initializeScrollEffects = () => {
-    const navbar = querySelector('.navbar');
+    const navbar = document.querySelector('.navbar');
     if (!navbar) return;
 
     window.addEventListener('scroll', () => {
@@ -292,7 +300,7 @@ const initializeApp = async () => {
     cacheDOMElements();
     
     // Initialize Supabase
-    const supabaseInitialized = initializeSupabase();
+    const supabaseInitialized = await initializeSupabase();
     
     // Update authentication state
     updateAuthButton();
@@ -307,8 +315,11 @@ const initializeApp = async () => {
     initializeGenderFilters();
     
     // Load initial products if Supabase is available
-    
-    await loadInitialProducts();
+    if (supabaseInitialized) {
+        await loadInitialProducts();
+    } else {
+        showMessage('Failed to connect to database. Please refresh the page.', 'error');
+    }
 };
 
 // Error boundary for unhandled errors
