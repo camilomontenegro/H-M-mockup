@@ -34,6 +34,15 @@ const cacheDOMElements = () => {
 };
 
 // Initialize Supabase client
+const initializeSupabase = () => {
+    if (supabase) {
+        console.log('Supabase initialized successfully');
+        return true;
+    } else {
+        console.error('Supabase failed to initialize');
+        return false;
+    }
+};
 
 // Fetch products from Supabase
 const fetchProducts = async (gender = 'women') => {
